@@ -1,9 +1,12 @@
 package com.tutienda.backend;
 
 import com.tutienda.backend.model.Product;
+import com.tutienda.backend.model.User;
 import com.tutienda.backend.repository.ProductRepository;
+import com.tutienda.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -13,12 +16,13 @@ import java.util.List;
 public class DataLoader implements CommandLineRunner {
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
-        if (productRepository.count() > 0) return;
-
-        productRepository.saveAll(List.of(
+        if (productRepository.count() == 0) {
+            productRepository.saveAll(List.of(
 
                 // ☕ CAFÉ
                 product("Granos Etiopía Yirgacheffe", "Café de origen único, notas de frutos rojos y jazmín. Tostado medio.", 3200.0, "Café",
@@ -81,10 +85,26 @@ public class DataLoader implements CommandLineRunner {
                         "https://placehold.co/400x400?text=Portutucas"),
                 product("Caja de Almacenamiento", "Madera de bambú con tapa magnética y bandeja interior.", 4500.0, "Accesorios",
                         "https://placehold.co/400x400?text=Caja")
-        ));
+            ));
+            System.out.println(">>> Productos Moccana cargados");
+        }
+        if (userRepository.count() == 0) {
+            User admin = new User();
+            admin.setEmail("admin@moccana.com");
+            admin.setPassword(passwordEncoder.encode("moccana2025"));
+            admin.setRole(User.Role.ADMIN);
+            userRepository.save(admin);
 
-        System.out.println(">>> Productos Moccana cargados");
+            User editor = new User();
+            editor.setEmail("editor@moccana.com");
+            editor.setPassword(passwordEncoder.encode("editor2025"));
+            editor.setRole(User.Role.EDITOR);
+            userRepository.save(editor);
+
+            System.out.println(">>> Usuarios creados");
+        }
     }
+
 
     private Product product(String name, String description, Double price, String category, String image) {
         Product p = new Product();
