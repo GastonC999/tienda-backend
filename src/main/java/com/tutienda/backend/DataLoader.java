@@ -1,7 +1,9 @@
 package com.tutienda.backend;
 
+import com.tutienda.backend.model.HeroSlide;
 import com.tutienda.backend.model.Product;
 import com.tutienda.backend.model.User;
+import com.tutienda.backend.repository.HeroSlideRepository;
 import com.tutienda.backend.repository.ProductRepository;
 import com.tutienda.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class DataLoader implements CommandLineRunner {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final HeroSlideRepository heroSlideRepository;
 
     @Override
     public void run(String... args) {
@@ -103,6 +106,14 @@ public class DataLoader implements CommandLineRunner {
 
             System.out.println(">>> Usuarios creados");
         }
+        if (heroSlideRepository.count() == 0) {
+            heroSlideRepository.saveAll(List.of(
+                    slide("Café de Especialidad", "Granos seleccionados de origen único", "Ver cafés", "/products?category=Café", "https://placehold.co/1200x500", 1),
+                    slide("Cannabis Medicinal", "Productos de calidad para tu bienestar", "Ver productos", "/products?category=Cannabis Medicinal", "https://placehold.co/1200x500", 2),
+                    slide("Todo para tu Cultivo", "Equipamiento profesional para cultivadores", "Ver cultivo", "/products?category=Cultivo", "https://placehold.co/1200x500", 3),
+                    slide("Accesorios", "Complementos esenciales para tu experiencia", "Ver accesorios", "/products?category=Accesorios", "https://placehold.co/1200x500", 4)
+            ));
+        }
     }
 
 
@@ -114,5 +125,16 @@ public class DataLoader implements CommandLineRunner {
         p.setCategory(category);
         p.setImage(image);
         return p;
+    }
+
+    private HeroSlide slide(String title, String subtitle, String cta, String href, String imagenUrl, Integer order){
+        HeroSlide slide = new HeroSlide();
+        slide.setTitle(title);
+        slide.setSubtitle(subtitle);
+        slide.setCta(cta);
+        slide.setHref(href);
+        slide.setImageUrl(imagenUrl);
+        slide.setOrden(order);
+        return slide;
     }
 }

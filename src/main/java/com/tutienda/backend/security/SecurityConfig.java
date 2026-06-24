@@ -52,6 +52,8 @@ public class SecurityConfig {
                         // Rutas compartidas entre ADMIN y EDITOR
                         .requestMatchers(HttpMethod.PUT, urlProducts).hasAnyRole(admin, editor)
                         .requestMatchers("/api/upload/**").hasAnyRole(admin, editor)
+                        .requestMatchers(HttpMethod.GET, "/api/slides").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/slides/**").hasAnyRole(admin, editor)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
