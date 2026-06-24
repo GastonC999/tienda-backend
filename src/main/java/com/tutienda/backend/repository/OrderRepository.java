@@ -19,14 +19,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
     List<Object[]> countOrdersByStatus();
 
-    // Top 5 productos más vendidos
-    @Query("SELECT new com.tutienda.backend.dto.TopProductDTO(oi.product.name, SUM(oi.quantity)) " +
-            "FROM OrderItem oi GROUP BY oi.product.name ORDER BY SUM(oi.quantity) DESC LIMIT 5")
+    @Query("SELECT new com.tutienda.backend.dto.TopProductDTO(oi.productName, SUM(oi.quantity)) " +
+            "FROM OrderItem oi GROUP BY oi.productName ORDER BY SUM(oi.quantity) DESC LIMIT 5")
     List<TopProductDTO> getTopProducts();
 
-    // Ventas por categoría (solo órdenes PAID)
-    @Query("SELECT oi.product.category, SUM(oi.price * oi.quantity) " +
-            "FROM OrderItem oi WHERE oi.order.status = 'PAID' GROUP BY oi.product.category")
+    @Query(value = "SELECT p.category, SUM(oi.price * oi.quantity) " +
+            "FROM order_items oi " +
+            "JOIN products p ON oi.product_id = p.id " +
+            "JOIN orders o ON oi.order_id = o.id " +
+            "WHERE o.status = 'PAID' " +
+            "GROUP BY p.category", nativeQuery = true)
     List<Object[]> getRevenueByCategory();
 
     // Órdenes de los últimos 30 días agrupadas por día (query nativa MySQL)
