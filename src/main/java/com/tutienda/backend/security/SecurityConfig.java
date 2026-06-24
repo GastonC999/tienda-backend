@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,22 +31,27 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        final String urlProducts = "/api/products/**";
+        final String admin = "ADMIN";
+        final String editor = "EDITOR";
+
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Público
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        // Solo admin
-                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAnyRole("ADMIN", "EDITOR")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
-                        .requestMatchers("/api/upload/**").hasAnyRole("ADMIN", "EDITOR")
-                        // Todo lo demás requiere auth
+                        .requestMatchers(HttpMethod.GET, urlProducts).permitAll()
+                        // Rutas rol ADMIN
+                        .requestMatchers(HttpMethod.POST, urlProducts).hasRole(admin)
+                        .requestMatchers(HttpMethod.DELETE, urlProducts).hasRole(admin)
+                        .requestMatchers(HttpMethod.GET, "/api/stats").hasRole(admin)
+                        .requestMatchers("/api/orders/**").hasRole(admin)
+                        // Rutas compartidas entre ADMIN y EDITOR
+                        .requestMatchers(HttpMethod.PUT, urlProducts).hasAnyRole(admin, editor)
+                        .requestMatchers("/api/upload/**").hasAnyRole(admin, editor)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
