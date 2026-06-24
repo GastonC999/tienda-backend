@@ -18,7 +18,7 @@ public class StatsService {
 
     private final OrderRepository orderRepository;
 
-    public StatsResponse getStats(){
+    public StatsResponse getStats() {
         BigDecimal totalRevenue = orderRepository.getTotalRevenue();
 
         List<Object[]> statusRows = orderRepository.countOrdersByStatus();
