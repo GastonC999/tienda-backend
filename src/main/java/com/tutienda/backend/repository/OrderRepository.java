@@ -1,6 +1,7 @@
 package com.tutienda.backend.repository;
 
 import com.tutienda.backend.dto.TopProductDTO;
+import com.tutienda.backend.enums.OrderStatus;
 import com.tutienda.backend.model.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByOrderByCreatedAtDesc();
-    List<Order> findByStatusOrderByCreatedAtDesc(String status);
+    List<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status);
     // Total de ventas de órdenes PAID
     @Query("SELECT COALESCE(SUM(o.total), 0) FROM Order o WHERE o.status = 'PAID'")
     BigDecimal getTotalRevenue();
