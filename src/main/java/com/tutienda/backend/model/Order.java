@@ -1,5 +1,6 @@
 package com.tutienda.backend.model;
 
+import com.tutienda.backend.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -17,7 +18,8 @@ public class Order {
     private String customerName;
     private String customerEmail;
     private Double total;
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
     private LocalDateTime createdAt;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -27,6 +29,6 @@ public class Order {
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
-        status = "PENDING";
+        status = OrderStatus.PENDING;
     }
 }

@@ -39,6 +39,8 @@ mercadopago.access-token=TU_ACCESS_TOKEN
 cloudinary.cloud-name=TU_CLOUD_NAME
 cloudinary.api-key=TU_API_KEY
 cloudinary.api-secret=TU_API_SECRET
+
+allowed.origin=http://localhost:3000
 ```
 
 > ⚠️ `application.properties` está en `.gitignore`. Nunca subas credenciales al repo.
@@ -47,82 +49,95 @@ cloudinary.api-secret=TU_API_SECRET
 ```
 com.tutienda.backend/
   config/
-    CloudinaryConfig.java       # Bean de Cloudinary con credenciales
-  model/
-    Product.java                # Entidad JPA: tabla products
-    Order.java                  # Entidad JPA: tabla orders
-    OrderItem.java              # Entidad JPA: tabla order_items (guarda snapshot: productId, productName, price)
-    User.java                   # Entidad JPA: tabla users (roles: ADMIN, EDITOR)
-    HeroSlide.java              # Entidad JPA: tabla hero_slides
-  repository/
-    ProductRepository.java
-    OrderRepository.java        # Incluye queries para stats (revenue, top productos, categorías, daily orders)
-    UserRepository.java         # findByEmail()
-    HeroSlideRepository.java    # findAllByOrderByOrdenAsc()
+    CloudinaryConfig.java         # Bean de Cloudinary con credenciales
   controller/
-    ProductController.java      # GET /api/products, GET /api/products/{id}, POST, PUT, DELETE
-    OrderController.java        # POST /api/orders, GET /api/orders, PUT /api/orders/{id}/status
-    StatsController.java        # GET /api/stats
-    HeroSlideController.java    # GET /api/slides, PUT /api/slides/{id}
-    PaymentController.java      # POST /api/payments/create-preference
-    UploadController.java       # POST /api/upload → Cloudinary
-    AuthController.java         # POST /api/auth/login → devuelve JWT
+    AuthController.java           # POST /api/auth/login → devuelve JWT
+    HeroSlideController.java      # GET /api/slides · PUT /api/slides/{id}
+    OrderController.java          # POST · GET /api/orders · PUT /api/orders/{id}/status
+    PaymentController.java        # POST /api/payments/create-preference
+    ProductController.java        # GET · POST · PUT · DELETE /api/products
+    StatsController.java          # GET /api/stats
+    UploadController.java         # POST /api/upload → Cloudinary
   dto/
-    TopProductDTO.java          # record: productName, totalQuantity
-    DailyOrderDTO.java          # record: date, orderCount
-    StatsResponse.java          # record: totalRevenue, ordersByStatus, topProducts, revenueByCategory, dailyOrders
+    DailyOrderDTO.java            # record: date, orderCount
+    StatsResponse.java            # record: totalRevenue, ordersByStatus, topProducts, revenueByCategory, dailyOrders
+    TopProductDTO.java            # record: productName, totalQuantity
+    UpdateStatusRequest.java      # record: status (OrderStatus)
+  enums/
+    OrderStatus.java              # PENDING, PAID, CANCELLED
+  exception/
+    GlobalExceptionHandler.java   # @RestControllerAdvice: maneja todas las excepciones
+    InsufficientStockException.java
+    InvalidOrderStatusException.java
+    OrderNotFoundException.java
+    ProductNotFoundException.java
+  model/
+    HeroSlide.java                # Entidad JPA: tabla hero_slides
+    Order.java                    # Entidad JPA: tabla orders — @PrePersist setea status y createdAt
+    OrderItem.java                # Entidad JPA: tabla order_items (snapshot de producto)
+    Product.java                  # Entidad JPA: tabla products
+    User.java                     # Entidad JPA: tabla users (roles: ADMIN, EDITOR)
+  repository/
+    HeroSlideRepository.java      # findAllByOrderByOrdenAsc()
+    OrderRepository.java          # queries para stats, filtro por status, orden por fecha
+    ProductRepository.java
+    UserRepository.java           # findByEmail()
   security/
-    JwtService.java             # Genera y valida tokens JWT
-    JwtFilter.java              # Intercepta requests y verifica el token
-    SecurityConfig.java         # Reglas de acceso por rol y CORS global
-    UserDetailsServiceImpl.java # Carga usuarios desde MySQL para Spring Security
-  DataLoader.java               # Carga 27 productos y 2 usuarios al iniciar si están vacíos
+    JwtFilter.java                # Intercepta requests y verifica el token
+    JwtService.java               # Genera y valida tokens JWT
+    SecurityConfig.java           # Reglas de acceso por rol y CORS global
+    UserDetailsServiceImpl.java   # Carga usuarios desde MySQL para Spring Security
+  service/
+    OrderService.java             # Lógica de negocio de órdenes y descuento de stock
+    StatsService.java             # Ensambla métricas para el dashboard
+  DataLoader.java                 # Siembra 27 productos, 2 usuarios y 4 slides si las tablas están vacías
   BackendApplication.java
 ```
 
 ## Endpoints REST
 
-### Auth (público)
-| Método | URL | Descripción |
-|---|---|---|
-| POST | `/api/auth/login` | Login con email y password → devuelve JWT + role |
+### Auth
+| Método | URL | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/api/auth/login` | Público | Login con email y password → devuelve JWT + role |
 
 ### Productos
-| Método | URL | Rol requerido |
-|---|---|---|
-| GET | `/api/products` | Público |
-| GET | `/api/products/{id}` | Público |
-| POST | `/api/products` | ADMIN |
-| PUT | `/api/products/{id}` | ADMIN, EDITOR |
-| DELETE | `/api/products/{id}` | ADMIN |
+| Método | URL | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/products` | Público | Lista todos los productos |
+| GET | `/api/products/{id}` | Público | Detalle de un producto |
+| POST | `/api/products` | ADMIN | Crear producto |
+| PUT | `/api/products/{id}` | ADMIN, EDITOR | Editar producto |
+| DELETE | `/api/products/{id}` | ADMIN | Eliminar producto |
 
 ### Órdenes
-| Método | URL | Rol requerido | Descripción |
+| Método | URL | Acceso | Descripción |
 |---|---|---|---|
-| POST | `/api/orders` | Público | Crear orden |
+| POST | `/api/orders` | Público | Crear orden y descontar stock |
 | GET | `/api/orders` | ADMIN | Listar todas (opcional `?status=PENDING`) |
+| GET | `/api/orders/{id}` | ADMIN | Detalle de una orden |
 | PUT | `/api/orders/{id}/status` | ADMIN | Cambiar estado de una orden |
 
 ### Estadísticas
-| Método | URL | Rol requerido | Descripción |
+| Método | URL | Acceso | Descripción |
 |---|---|---|---|
-| GET | `/api/stats` | ADMIN | Métricas del dashboard (revenue, top productos, ventas por categoría, órdenes por día) |
+| GET | `/api/stats` | ADMIN | Revenue total, órdenes por estado, top productos, ventas por categoría, órdenes por día |
 
 ### Hero Slides
-| Método | URL | Rol requerido | Descripción |
+| Método | URL | Acceso | Descripción |
 |---|---|---|---|
 | GET | `/api/slides` | Público | Lista los 4 slides del carousel ordenados |
-| PUT | `/api/slides/{id}` | ADMIN, EDITOR | Editar título, subtítulo, CTA, href e imagen de un slide |
-
-
-| Método | URL | Descripción |
-|---|---|---|
-| POST | `/api/payments/create-preference` | Crea preferencia MP, devuelve sandboxInitPoint |
+| PUT | `/api/slides/{id}` | ADMIN, EDITOR | Editar título, subtítulo, CTA, href e imagen |
 
 ### Imágenes
-| Método | URL | Rol requerido |
-|---|---|---|
-| POST | `/api/upload` | ADMIN, EDITOR |
+| Método | URL | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/api/upload` | ADMIN, EDITOR | Subir imagen a Cloudinary → devuelve URL |
+
+### Pagos
+| Método | URL | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/api/payments/create-preference` | Público | Crea preferencia MP → devuelve sandboxInitPoint |
 
 ## Modelo de datos
 
@@ -135,6 +150,7 @@ com.tutienda.backend/
 | price | Double | Precio |
 | image | String | URL de Cloudinary |
 | category | String | Café / Cannabis Medicinal / Cultivo / Accesorios |
+| stock | Integer | Unidades disponibles |
 
 ### Order
 | Campo | Tipo | Descripción |
@@ -143,15 +159,15 @@ com.tutienda.backend/
 | customerName | String | Nombre del cliente |
 | customerEmail | String | Email del cliente |
 | total | Double | Total de la orden |
-| status | String | PENDING / PAID / CANCELLED |
-| createdAt | LocalDateTime | Fecha de creación automática |
+| status | OrderStatus | PENDING / PAID / CANCELLED — seteado por @PrePersist |
+| createdAt | LocalDateTime | Fecha de creación — seteada por @PrePersist |
 | items | List\<OrderItem\> | OneToMany cascade |
 
 ### OrderItem
 | Campo | Tipo | Descripción |
 |---|---|---|
 | id | Long | PK autoincremental |
-| productId | Long | ID del producto |
+| productId | Long | ID del producto al momento de compra |
 | productName | String | Snapshot del nombre al momento de compra |
 | price | Double | Snapshot del precio al momento de compra |
 | quantity | Integer | Cantidad |
@@ -167,13 +183,31 @@ com.tutienda.backend/
 | imageUrl | String | URL de la imagen de fondo |
 | orden | Integer | Orden de aparición en el carousel |
 
-
+### User
 | Campo | Tipo | Descripción |
 |---|---|---|
 | id | Long | PK autoincremental |
 | email | String | Único, usado como username |
 | password | String | BCrypt hash |
 | role | Enum | ADMIN / EDITOR |
+
+## Manejo de excepciones
+
+`GlobalExceptionHandler` centraliza todas las respuestas de error:
+
+| Excepción | HTTP | Cuándo se lanza |
+|---|---|---|
+| `InsufficientStockException` | 400 | Stock insuficiente al crear orden |
+| `InvalidOrderStatusException` | 400 | Status inválido en PUT /orders/{id}/status |
+| `OrderNotFoundException` | 404 | Orden no encontrada |
+| `ProductNotFoundException` | 404 | Producto no encontrado |
+
+## Migraciones Flyway
+En `src/main/resources/db/migration/`:
+- `V1__init.sql` — tablas products, orders, order_items
+- `V2__create_users.sql` — tabla users
+- `V3__create_hero_slides.sql` — tabla hero_slides
+- `V4__add_stock_to_products.sql` — columna stock en products
 
 ## Usuarios de prueba (creados por DataLoader)
 | Email | Password | Rol |
@@ -187,30 +221,31 @@ com.tutienda.backend/
 3. Incluir en requests protegidos: `Authorization: Bearer <token>`
 4. Token válido por 24hs (configurable con `jwt.expiration`)
 
-## Base de datos
-- **Desarrollo**: MySQL local, base `tienda`
-- **Producción**: MySQL en Railway
-- **Migraciones Flyway** en `src/main/resources/db/migration/`:
-    - `V1__init.sql` — tablas products, orders, order_items
-    - `V2__create_users.sql` — tabla users
-    - `V3__create_hero_slides.sql` — tabla hero_slides
+## CORS
+Configurado globalmente en `SecurityConfig` leyendo `allowed.origin` del `application.properties`.
+- **Desarrollo:** `allowed.origin=http://localhost:3000`
+- **Producción (Railway):** `ALLOWED_ORIGIN=https://tu-tienda.vercel.app`
 
 ## Imágenes
 Cloudinary bajo carpeta `moccana/products`, transformación `f_auto,q_auto,w_800`.
 
-## CORS
-Configurado globalmente en `SecurityConfig` leyendo la variable `allowed.origin` del `application.properties`. No usar `@CrossOrigin` por controller.
-
-- **Desarrollo**: `allowed.origin=http://localhost:3000`
-- **Producción (Railway)**: `ALLOWED_ORIGIN=https://tu-tienda.vercel.app`
-
 ## MercadoPago
-Checkout Pro con `getSandboxInitPoint()`. Cambiar a `getInitPoint()` en producción e implementar webhook para actualizar estado de orden automáticamente.
+Checkout Pro con `getSandboxInitPoint()`. Pendiente: cambiar a `getInitPoint()` e implementar webhook para actualizar estado de orden automáticamente.
 
 ## Deploy
-Railway con MySQL como servicio separado. Variables de entorno en el panel de Railway.
+Railway con MySQL como servicio separado. Variables de entorno requeridas en Railway:
+```
+SPRING_DATASOURCE_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_USERNAME=${{MySQL.MYSQLUSER}}
+SPRING_DATASOURCE_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+JWT_SECRET=...
+MERCADOPAGO_ACCESS_TOKEN=...
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+ALLOWED_ORIGIN=https://tu-tienda.vercel.app
+```
 
 ## Pendiente
-- Webhook MercadoPago para actualizar orden a PAID automáticamente
-- Campo stock en productos (BACK-07)
+- Webhook MercadoPago para actualizar orden a PAID automáticamente (BACK-09)
 - Cambiar `getSandboxInitPoint()` por `getInitPoint()` en producción

@@ -1,61 +1,42 @@
 package com.tutienda.backend.controller;
 
+import com.tutienda.backend.dto.UpdateStatusRequest;
+import com.tutienda.backend.enums.OrderStatus;
 import com.tutienda.backend.model.Order;
-import com.tutienda.backend.repository.OrderRepository;
+import com.tutienda.backend.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderRepository orderRepository;
+    private final OrderService orderService;
 
     @PostMapping
     public ResponseEntity<Order> create(@RequestBody Order order) {
-        Order saved = orderRepository.save(order);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(orderService.createOrder(order));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Order> getById(@PathVariable Long id) {
-        return orderRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(orderService.getById(id));
     }
 
     @GetMapping
     public ResponseEntity<List<Order>> getAll(
-            @RequestParam(required = false) String status) {
-        List<Order> orders = status != null
-                ? orderRepository.findByStatusOrderByCreatedAtDesc(status)
-                : orderRepository.findAllByOrderByCreatedAtDesc();
-        return ResponseEntity.ok(orders);
+            @RequestParam(required = false) OrderStatus status) {
+        return ResponseEntity.ok(orderService.getAll(status));
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
-
-        String newStatus = body.get("status");
-        List<String> valid = List.of("PENDING", "PAID", "CANCELLED");
-
-        if (!valid.contains(newStatus)) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Estado inválido. Valores permitidos: PENDING, PAID, CANCELLED"));
-        }
-
-        return orderRepository.findById(id)
-                .map(order -> {
-                    order.setStatus(newStatus);
-                    return ResponseEntity.ok(orderRepository.save(order));
-                })
-                .orElse(ResponseEntity.notFound().build());
+            @RequestBody UpdateStatusRequest request) {
+        return ResponseEntity.ok(orderService.updateStatus(id, request.status()));
     }
 }
