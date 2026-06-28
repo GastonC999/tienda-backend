@@ -124,6 +124,7 @@ public class DataLoader implements CommandLineRunner {
         p.setPrice(price);
         p.setCategory(category);
         p.setImage(image);
+        p.setStock(100);// Temporal: agregar `stock` como parámetro del método y pasar el argumento en cada llamada a `product()`.
         return p;
     }
 
