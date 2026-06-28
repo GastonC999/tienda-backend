@@ -12,7 +12,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/upload")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class UploadController {
 
     private final Cloudinary cloudinary;
