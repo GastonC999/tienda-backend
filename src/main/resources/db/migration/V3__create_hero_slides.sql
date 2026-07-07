@@ -1,5 +1,5 @@
 CREATE TABLE hero_slides (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     subtitle VARCHAR(255),
     cta VARCHAR(100),
