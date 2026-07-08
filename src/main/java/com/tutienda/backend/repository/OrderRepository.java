@@ -34,7 +34,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Órdenes de los últimos 30 días agrupadas por día (query nativa MySQL)
     @Query(value = "SELECT DATE(created_at) as date, COUNT(*) as orderCount " +
-            "FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) " +
+            "FROM orders WHERE created_at >= NOW() - INTERVAL '30 days' " +
             "GROUP BY DATE(created_at) ORDER BY date ASC", nativeQuery = true)
     List<Object[]> getDailyOrdersLast30Days();
 }
