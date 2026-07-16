@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 @Service
 @Slf4j
@@ -21,7 +20,7 @@ public class HeroSlideService {
         return heroSlideRepository.findAllByOrderByOrdenAsc();
     }
 
-    public HeroSlide updatedSlide(Long id, UpdateHeroSlideRequest request) {
+    public HeroSlide updateSlide(Long id, UpdateHeroSlideRequest request) {
         HeroSlide slide = heroSlideRepository.findById(id)
                 .orElseThrow(() -> new HeroSlideNotFoundException("Slide no encontrado"));
         updateFields(slide, request);

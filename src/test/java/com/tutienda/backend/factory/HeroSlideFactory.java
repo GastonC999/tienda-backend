@@ -23,7 +23,7 @@ public class HeroSlideFactory {
         return h;
     }
 
-    public static UpdateHeroSlideRequest anUpdateHeroSlideRequest(){
+    public static UpdateHeroSlideRequest anUpdateRequest(){
         return new UpdateHeroSlideRequest(
                 "Todo para el cultivo",
                 "Equipamiento profesional para tu cultivo",
