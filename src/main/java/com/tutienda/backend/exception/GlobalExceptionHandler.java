@@ -21,7 +21,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             OrderNotFoundException.class,
-            ProductNotFoundException.class
+            ProductNotFoundException.class,
+            HeroSlideNotFoundException.class
     })
     public ResponseEntity<?> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
