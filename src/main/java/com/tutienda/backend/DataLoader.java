@@ -44,19 +44,6 @@ public class DataLoader implements CommandLineRunner {
                         "https://placehold.co/400x400?text=Molinillo"),
                 product("Dripper V60", "Cerámica japonesa para filtrado por goteo. Incluye 10 filtros.", 3600.0, "Café",
                         "https://placehold.co/400x400?text=V60"),
-
-                // 🌿 CANNABIS MEDICINAL
-                product("Aceite CBD 10% 30ml", "Full spectrum, extracción CO2. Ideal para ansiedad y dolor crónico.", 8500.0, "Cannabis Medicinal",
-                        "https://placehold.co/400x400?text=Aceite+CBD"),
-                product("Aceite CBD 5% 30ml", "Espectro amplio, sin THC. Primera opción para principiantes.", 5900.0, "Cannabis Medicinal",
-                        "https://placehold.co/400x400?text=Aceite+5"),
-                product("Tintura CBD 500mg", "Base alcohólica, absorción sublingual rápida.", 6200.0, "Cannabis Medicinal",
-                        "https://placehold.co/400x400?text=Tintura"),
-                product("Crema CBD 50mg", "Crema tópica para dolor muscular y articular. 50ml.", 4800.0, "Cannabis Medicinal",
-                        "https://placehold.co/400x400?text=Crema"),
-                product("Plantin Auto White Widow", "Semilla feminizada autofloreciente. Alta producción.", 3500.0, "Cannabis Medicinal",
-                        "https://placehold.co/400x400?text=Plantin"),
-
                 // 🌱 CULTIVO
                 product("TopCrop Big One 1kg", "Fertilizante de floración de alta concentración.", 4200.0, "Cultivo",
                         "https://placehold.co/400x400?text=TopCrop"),
@@ -109,7 +96,6 @@ public class DataLoader implements CommandLineRunner {
         if (heroSlideRepository.count() == 0) {
             heroSlideRepository.saveAll(List.of(
                     slide("Café de Especialidad", "Granos seleccionados de origen único", "Ver cafés", "/products?category=Café", "https://placehold.co/1200x500", 1),
-                    slide("Cannabis Medicinal", "Productos de calidad para tu bienestar", "Ver productos", "/products?category=Cannabis Medicinal", "https://placehold.co/1200x500", 2),
                     slide("Todo para tu Cultivo", "Equipamiento profesional para cultivadores", "Ver cultivo", "/products?category=Cultivo", "https://placehold.co/1200x500", 3),
                     slide("Accesorios", "Complementos esenciales para tu experiencia", "Ver accesorios", "/products?category=Accesorios", "https://placehold.co/1200x500", 4)
             ));
