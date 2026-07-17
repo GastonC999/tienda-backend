@@ -5,6 +5,7 @@ import com.tutienda.backend.model.HeroSlide;
 import com.tutienda.backend.service.HeroSlideService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,5 +25,12 @@ public class HeroSlideController {
     @PutMapping("/{id}")
     public ResponseEntity<HeroSlide> update(@PathVariable Long id, @RequestBody UpdateHeroSlideRequest request) {
         return ResponseEntity.ok(heroSlideService.updateSlide(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        heroSlideService.deleteSlide(id);
+        return ResponseEntity.noContent().build();
     }
 }

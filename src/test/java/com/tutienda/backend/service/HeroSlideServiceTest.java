@@ -7,6 +7,7 @@ import com.tutienda.backend.model.HeroSlide;
 import com.tutienda.backend.repository.HeroSlideRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -76,5 +77,62 @@ class HeroSlideServiceTest {
 
         verify(heroSlideRepository).findById(1L);
         verify(heroSlideRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteSlide_WhenSlideExists_ThenDeletesAndReordersRemaining() {
+        // Arrange
+        HeroSlide slideToDelete = HeroSlideFactory.createSlide(2L, 1);
+
+        HeroSlide slide1 = HeroSlideFactory.createSlide(1L, 0);
+        HeroSlide slide3 = HeroSlideFactory.createSlide(3L, 2);
+        HeroSlide slide4 = HeroSlideFactory.createSlide(4L, 3);
+        List<HeroSlide> remainingAfterDelete = List.of(slide1, slide3, slide4);
+
+        when(heroSlideRepository.findById(2L)).thenReturn(Optional.of(slideToDelete));
+        when(heroSlideRepository.findAllByOrderByOrdenAsc()).thenReturn(remainingAfterDelete);
+
+        // Act
+        heroSlideService.deleteSlide(2L);
+
+        // Assert
+        verify(heroSlideRepository).delete(slideToDelete);
+
+        ArgumentCaptor<List<HeroSlide>> captor = ArgumentCaptor.forClass(List.class);
+        verify(heroSlideRepository).saveAll(captor.capture());
+
+        List<HeroSlide> savedSlides = captor.getValue();
+        assertEquals(0, savedSlides.get(0).getOrden());
+        assertEquals(1, savedSlides.get(1).getOrden());
+        assertEquals(2, savedSlides.get(2).getOrden());
+    }
+
+    @Test
+    void deleteSlide_WhenSlideDoesNotExist_ThenThrowsHeroSlideNotFoundException() {
+        // Arrange
+        when(heroSlideRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(HeroSlideNotFoundException.class,
+                () -> heroSlideService.deleteSlide(99L));
+
+        verify(heroSlideRepository, never()).delete(any());
+        verify(heroSlideRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void deleteSlide_WhenOnlyOneSlideExists_ThenDeletesWithoutReordering() {
+        // Arrange
+        HeroSlide onlySlide = HeroSlideFactory.createSlide(1L, 0);
+
+        when(heroSlideRepository.findById(1L)).thenReturn(Optional.of(onlySlide));
+        when(heroSlideRepository.findAllByOrderByOrdenAsc()).thenReturn(List.of());
+
+        // Act
+        heroSlideService.deleteSlide(1L);
+
+        // Assert
+        verify(heroSlideRepository).delete(onlySlide);
+        verify(heroSlideRepository).saveAll(List.of());
     }
 }

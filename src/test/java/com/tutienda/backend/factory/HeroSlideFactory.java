@@ -23,7 +23,7 @@ public class HeroSlideFactory {
         return h;
     }
 
-    public static UpdateHeroSlideRequest anUpdateRequest(){
+    public static UpdateHeroSlideRequest anUpdateRequest() {
         return new UpdateHeroSlideRequest(
                 "Todo para el cultivo",
                 "Equipamiento profesional para tu cultivo",
@@ -31,5 +31,17 @@ public class HeroSlideFactory {
                 "Ver cultivo",
                 "/products?category=Cultivo",
                 3);
+    }
+
+    public static HeroSlide createSlide(Long id, int orden) {
+        HeroSlide slide = new HeroSlide();
+        slide.setId(id);
+        slide.setTitle("Slide " + id);
+        slide.setSubtitle("Subtitle " + id);
+        slide.setCta("Ver más");
+        slide.setHref("/products");
+        slide.setImageUrl("https://res.cloudinary.com/moccana/slide" + id + ".jpg");
+        slide.setOrden(orden);
+        return slide;
     }
 }
